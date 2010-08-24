@@ -13,3 +13,8 @@ Thumbs.db
 obj/
 [Rr]elease*/
 *.user
+.sconsign.dblite
+*/tags
+tags
+build
+*.ods
