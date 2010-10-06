@@ -60,6 +60,8 @@ int main(int argc, char** argv)
 
 	devDiag(&dev_id, &devInfo);
 
+	fprintf(stderr, "local mem size: %lu\n", devInfo.local_mem_size);
+
 	fft_result = fft2048(&ctx, &dev_id, NUM_DATA_BLK, data);
 
 	closeCL(&ctx);
@@ -289,7 +291,7 @@ float* fft2048(cl_context *ctx, cl_device_id *dev_id, int count, float data[])
 	// size of overlapped output blocks is twice as input, and has one block less
 	size_t out_size = ((count-1) * (SIZE_DATA_BLK<<1) * sizeof(float)) <<1;
 	size_t in_size = count * SIZE_DATA_BLK * sizeof(float);
-	size_t local_work_size = SIZE_DATA_BLK>>1;
+	size_t local_work_size = 1024;
 	size_t global_work_size = (count-1) * local_work_size;
 	ushort blk_size = SIZE_DATA_BLK;
 	ushort out_buf_size = (ushort)out_size;
