@@ -3,7 +3,7 @@
  *
  * Driver program for testing fft_2048.cl
  *
- * History: 24/8/2010 // Subrat Meher // Initial version of working fft_2048.cl
+ * History: 24/8/2010 // Subrat Meher - Initial version of working fft_2048.cl
  *
  */
 
@@ -40,7 +40,7 @@ void disp_fft(float *data, size_t count);
 
 //}}}
 
-int main(int argc, char** argv)
+int main(int argc, char *argv[])
 {
 	float *data;
 	float *fft_result;
@@ -73,70 +73,6 @@ int main(int argc, char** argv)
 
 	return EXIT_SUCCESS;
 }
-
-//{{{ devDiag
-void devDiag(cl_device_id *dev_id, DevInfo *devInfo)
-{
-	size_t parm_val_size_ret;
-
-	clGetDeviceInfo( *dev_id,
-					 CL_DEVICE_TYPE,
-					 sizeof(cl_device_type),
-					 (void*)&(devInfo->dev_type),
-					 &parm_val_size_ret);
-
-	clGetDeviceInfo( *dev_id,
-					 CL_DEVICE_MAX_WORK_GROUP_SIZE,
-					 sizeof(size_t),
-					 (void*)&(devInfo->max_work_group_size),
-					 &parm_val_size_ret);
-
-	clGetDeviceInfo( *dev_id,
-					 CL_DEVICE_LOCAL_MEM_SIZE,
-					 sizeof(cl_ulong),
-					 (void*)&(devInfo->local_mem_size),
-					 &parm_val_size_ret);
-
-	clGetDeviceInfo( *dev_id,
-					 CL_DEVICE_LOCAL_MEM_TYPE,
-					 sizeof(cl_device_local_mem_type),
-					 (void*)&(devInfo->local_mem_type),
-					 &parm_val_size_ret);
-
-	/*
-	clGetDeviceInfo( *dev_id,
-					 ,
-					 ,
-					 ,
-					 &parm_val_size_ret);
-
-	clGetDeviceInfo( *dev_id,
-					 ,
-					 ,
-					 ,
-					 &parm_val_size_ret);
-
-	clGetDeviceInfo( *dev_id,
-					 ,
-					 ,
-					 ,
-					 &parm_val_size_ret);
-
-	clGetDeviceInfo( *dev_id,
-					 ,
-					 ,
-					 ,
-					 &parm_val_size_ret);
-
-	clGetDeviceInfo( *dev_id,
-					 ,
-					 ,
-					 ,
-					 &parm_val_size_ret);
-	*/
-
-}
-//}}}
 
 //{{{ disp_fft
 void disp_fft(float *data, size_t count)
@@ -190,83 +126,6 @@ float* genData(unsigned int num_blk, unsigned int blk_size)
 	}
 
 	return data;
-}
-//}}}
-
-//{{{ closeCL(cl_context *ctx)
-void closeCL(cl_context *ctx)
-{
-	clReleaseContext(*ctx);
-}
-//}}}
-
-//{{{ initCL()
-void initCL(cl_context *ctx, cl_device_id *dev_id)
-{
-	cl_int err;
-	
-	cl_platform_id platform_id[MAX_CL_PLATFORMS];
-	cl_uint num_platforms;
-
-	cl_device_id gpu_dev_id[MAX_CL_DEVS],
-				 cpu_dev_id[MAX_CL_DEVS];
-	int cpu_sel = 0,
-		gpu_sel = 0;
-	cl_uint num_gpu_devs;
-	cl_uint num_cpu_devs;
-
-	err = clGetPlatformIDs(MAX_CL_PLATFORMS, platform_id, &num_platforms);
-	checkCLErr(err, "Error in clGetPlatformIDs");
-
-	err = clGetDeviceIDs(platform_id[0], CL_DEVICE_TYPE_GPU, MAX_CL_DEVS,
-			gpu_dev_id, &num_gpu_devs);
-	if( false == checkCLErr(err, "Error in clGetDeviceIDs for GPU") )
-		gpu_sel = -1;
-
-	err = clGetDeviceIDs(platform_id[0], CL_DEVICE_TYPE_CPU, MAX_CL_DEVS,
-			cpu_dev_id, &num_cpu_devs);
-	if( false == checkCLErr(err, "Error in clGetDeviceIDs for CPU") )
-		cpu_sel = -1;
-
-	// try to use a GPU, fall back to CPU
-	if( gpu_sel ==  -1 )
-	{
-		fprintf(stderr, "No OpenCL GPUs were found. Looking for OpenCL CPUs.");
-		if( cpu_sel == -1 )
-		{
-			fprintf(stderr, "No OpenCL devices were found. Exiting.");
-			
-			dev_id = NULL;
-		}
-		else
-		{
-			*dev_id = cpu_dev_id[cpu_sel];
-		}
-	}
-	else
-	{
-		*dev_id = gpu_dev_id[gpu_sel];
-	}
-
-	cl_context_properties ctx_props[] = {
-		CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id[0],
-		0
-	};
-	*ctx = clCreateContext(ctx_props, 1, dev_id, &ctx_err, NULL, &err);
-	if( false == checkCLErr(err, "Context creation") )
-	{
-		ctx = NULL;
-	}
-
-	fprintf(stderr, "Got %i platforms.\n", num_platforms);
-	fprintf(stderr, "Got %i GPU and %i CPU devices.\n", num_gpu_devs, num_cpu_devs);
-}
-//}}}
-
-//{{{ ctx_err(const char *errinfo, const void *private_info, size_t cb, void *user_data)
-void ctx_err(const char *errinfo, const void *private_info, size_t cb, void *user_data)
-{
-	fprintf(stderr, "(EE): Context error\n");
 }
 //}}}
 
@@ -349,7 +208,7 @@ float* fft2048(cl_context *ctx, cl_device_id *dev_id, int count, float data[])
 	if(!checkCLErr(err, "fft2048: Build program"))
 	{
 		fprintf(stderr, "Program build error.\n");
-		fprintf(stderr, "Build Log (Truncated 16k):\n%s\n", log_bld_fft_rdx2);
+		fprintf(stderr, "Build Log (Truncated to 16k):\n%s\n", log_bld_fft_rdx2);
 	}
 	else
 	{
