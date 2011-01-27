@@ -1,0 +1,10 @@
+Import('env')
+Import('libmdct')
+Import('libcommon')
+
+localenv = env.Clone()
+
+mdct_test = localenv.Program('mdct_test', ['mdct_test.c', libmdct, libcommon])
+
+Export('mdct_test')
+

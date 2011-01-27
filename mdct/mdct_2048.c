@@ -4,52 +4,41 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
-#define MDCT_KERNEL_SRC "mdct.cl"
+#define MDCT_KERNEL_SRC "mdct_2048.cl"
 
-#include "common/clutil.h"
+#include "clutil.h"
 
 int mdct(size_t count, float *samples)
 {
 	DevInfo dev_info;
-	cl_context ctx;
+	aacl_kernel_ctx ctx;
+	cl_int err;
+	float *result;
 
-	initCL(&ctx, &dev_info.dev_id);
+	ctx.ws_local = 512;
+	ctx.ws_global = count/4;
+	ctx.in_count = count;
+	ctx.out_count = count/2;
+
+	init_cl(&ctx, &dev_info, "MDCT");
 	dev_diag(&dev_info);
 
+	buffer_create(samples, &ctx, "MDCT");
+	build_kernel(MDCT_KERNEL_SRC, "mdct_2048", &ctx, &dev_info, "MDCT");
 
+	// set kernel arguments
+	err = clSetKernelArg(ctx.kernel, 0, sizeof(cl_mem), &ctx.in);
+	check_cl_err(err, "MDCT", "Kernel::InputArgs");
+	err = clSetKernelArg(ctx.kernel, 1, sizeof(cl_mem), &ctx.out);
+	check_cl_err(err, "MDCT", "Kernel::OutputArgs");
 
-	return 0;
-}
+	upload_samples(samples, &ctx);
 
-// upload samples 
-float *prep_kernel(cl_context *ctx, DevInfo *info, float *samples, size_t count)
-{
-	cl_int err;
-	cl_mem in, out;
+	enqueue_kernel(&ctx, &dev_info, "MDCT");
+	result = download_result(&ctx, "MDCT");
 
-	in = clCreateBuffer( *ctx,
-						 CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-						 count * sizeof(float),
-						 samples,
-						 &err);
-	check_cl_err(err, "Create input buffer on CL device");
+	// do not free result buffer
+	//free(result);
 
-	out = clCreateBuffer( *ctx,
-						  CL_MEM_WRITE_ONLY,
-						  count * sizeof(float) >> 1,
-						  0,
-						  &err);
-	check_cl_err(err, "Create output buffer on CL device");
-
-	char *mdct_kernel_source;
-	size_t mdct_kernel_size;
-	GError *gerr;
-	if (!g_file_get_contents( MDCT_KERNEL_SRC,
-							  &mdct_kernel_source,
-							  &mdct_kernel_size,
-							  &gerr)) {
-		fprintf(stderr, "Error reading kernel source, %s.\n", gerr->message);
-		g_error_free(gerr);
-		return NULL;
-	}
+	return result;
 }

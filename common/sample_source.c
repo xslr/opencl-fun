@@ -1,17 +1,53 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-//#include <unistd.h>
-
-#include <sox.h>
+#include <glib.h>
+#include <glib/gstdio.h>
 
 #include "sample_source.h"
 
-unsigned int *getRandom(size_t count)
+char *sox_waveform_gen( unsigned int sr, float seconds, unsigned int freq, size_t sample_len,
+						const char shape[], const char prefix[], size_t prefix_len);
+char *sox_noise_gen( unsigned int sr, float seconds, size_t sample_len,
+					 const char noise_type[], const char prefix[], size_t prefix_len);
+
+int tocsvf(float *data, size_t count, const char *filename, const char *outdir,
+		   const char *modname)
 {
-	unsigned int *buf = malloc(sizeof(unsigned int) * count);
+	// TODO: use outdir
+	FILE *fp_csv = g_fopen(filename, "w");
+	if (fp_csv == NULL) {
+		fprintf(stderr, "%s:: Failed to open %s for writing!!\n", modname, filename);
+		return -1;
+	}
+
+	size_t index;
+	for (index = 0; index < count; index++) {
+		fprintf(fp_csv, "%f", data[index]);
+
+		if (index < (count-1))
+			fprintf(fp_csv, "\n");
+	}
+
+	fclose(fp_csv);
+
+	return 0;
+}
+
+float *get_zero(size_t count)
+{
+	float *buf = malloc(count * sizeof(float));
+
+	while (count > 0) {
+		--count;
+		buf[count] = 0;
+	}
+	return buf;
+}
+
+float *get_random(size_t count)
+{
+	float *buf = malloc(sizeof(float) * count);
 
 	srand( time(NULL) );
 
@@ -19,57 +55,86 @@ unsigned int *getRandom(size_t count)
 		--count;
 		buf[count] = rand();
 	}
+
+	return buf;
 }
 
-unsigned int *getAlt_1_0(size_t count)
+float *get_alt_1_0(size_t count)
 {
-	unsigned int *buf = malloc(sizeof(unsigned int) * count);
+	float *buf = malloc(sizeof(float) * count);
 
-	size_t uint_bit_len = sizeof(unsigned int) << 3;
+	size_t float_bit_len = sizeof(float) << 3;
 
 	unsigned int pilot = 0;
 
-	while (uint_bit_len > 0){
-		pilot ^= uint_bit_len % 2;
+	while (float_bit_len > 0){
+		pilot ^= float_bit_len % 2;
 		pilot <<= 1;
 
-		--uint_bit_len;
+		--float_bit_len;
 	}
 
 	while (count > 0){
 		buf[--count] = pilot;
 	}
+
+	return buf;
 }
 
-unsigned int *getSineWave(unsigned int sr, float seconds, unsigned int freq, size_t sample_len)
+float *get_sine_wave(unsigned int sr, float seconds, unsigned int freq)
 {
-	char *filename = sox_cmd_wrap(sr, seconds, freq, sample_len);
+	size_t sample_len = sizeof(float);
+	char *filename = sox_waveform_gen( sr, seconds, freq, sample_len,
+									   "sine", "aacl_sine", 10);
 
-	// got pcm data in file. now use it
-
-	struct stat info;
-	stat(filename, &info);
-
-	unsigned int *samples = malloc(info.st_size);
-	FILE *fp = fopen(filename, "r");
-	if (fp == NULL) {
-		// file open failed
-		free(samples);
+	// got pcm data in file. now load it into a buffer
+	float *buf;
+	size_t buf_size;
+	GError *gerr;
+	if (!g_file_get_contents( filename,
+							  (char**)&buf,
+							  &buf_size,
+							  &gerr)) {
+		fprintf(stderr, "Failed to read sound file: %s.\n", gerr->message);
+		g_error_free(gerr);
 		return NULL;
 	}
-	fread(samples, 1, info.st_size, fp);
-	fclose(fp);
 
-	// remove file after using it
-	snprintf(cmd, cmd_len, "rm %s.raw", filename);
-	system(cmd);
+	// TODO: remove file after using it
 
 	// release buffers
 	free(filename);
+
+	return buf;
 }
 
-char *sox_cmd_wrap_sine(unsigned int sr, float seconds, unsigned int freq, size_t sample_len,
-				   (const char) *shape, (const char) *prefix, size_t prefix_len)
+float *get_white_noise(unsigned int sr, float seconds)
+{
+	size_t sample_len = sizeof(float);
+	char *filename = sox_noise_gen(sr, seconds, sample_len, "whitenoise", "aacl_whitenoise", 10);
+
+	// got pcm data in file. now use it
+	float *buf;
+	size_t buf_size;
+	GError *gerr;
+	if (!g_file_get_contents( filename,
+							  (char**)&buf,
+							  &buf_size,
+							  &gerr)) {
+		fprintf(stderr, "Failed to read sound file: %s.\n", gerr->message);
+		g_error_free(gerr);
+		return NULL;
+	}
+	// TODO: remove file after using it
+
+	// release buffers
+	free(filename);
+
+	return buf;
+}
+
+char *sox_waveform_gen(unsigned int sr, float seconds, unsigned int freq, size_t sample_len,
+					   const char shape[], const char prefix[], size_t prefix_len)
 {
 	size_t fname_len = prefix_len + 6 + 1;
 	char *filename = malloc((fname_len) * sizeof(char));
@@ -88,8 +153,8 @@ char *sox_cmd_wrap_sine(unsigned int sr, float seconds, unsigned int freq, size_
 
 	// create raw file of signal amplitudes encoded as floats
 	int ret = snprintf(cmd, cmd_len,
-					   "sox -r %d -e float -%d -n %s synth %f %s %d",
-					   sr, slen, filename, seconds, shape, freq);
+					   "sox -r %d -e float -%lu -n %s synth %f %s %d",
+					   sr, sample_len, filename, seconds, shape, freq);
 	if (ret >= cmd_len) {
 		// command buffer for sox is too small
 		fprintf(stderr, "Command buffer for SoX is too small.\n");
@@ -106,8 +171,8 @@ char *sox_cmd_wrap_sine(unsigned int sr, float seconds, unsigned int freq, size_
 	return filename;
 }
 
-char *sox_cmd_wrap_noise(unsigned int sr, float seconds, size_t sample_len,
-				   (const char) *noise_type, (const char) *prefix, size_t prefix_len)
+char *sox_noise_gen(unsigned int sr, float seconds, size_t sample_len,
+					const char noise_type[], const char prefix[], size_t prefix_len)
 {
 	size_t fname_len = prefix_len + 6 + 1;
 	char *filename = malloc((fname_len) * sizeof(char));
@@ -126,8 +191,8 @@ char *sox_cmd_wrap_noise(unsigned int sr, float seconds, size_t sample_len,
 
 	// create raw file of signal amplitudes encoded as floats
 	int ret = snprintf(cmd, cmd_len,
-					   "sox -r %d -e float -%d -n %s synth %f %s",
-					   sr, slen, filename, seconds, noise_type);
+					   "sox -r %d -e float -%lu -n %s synth %f %s",
+					   sr, sample_len, filename, seconds, noise_type);
 	if (ret >= cmd_len) {
 		// command buffer for sox is too small
 		fprintf(stderr, "Command buffer for SoX is too small.\n");
@@ -142,30 +207,4 @@ char *sox_cmd_wrap_noise(unsigned int sr, float seconds, size_t sample_len,
 	free(cmd);
 
 	return filename;
-}
-
-unsigned int *getWhiteNoise(unsigned int sr, float seconds, size_t sample_len)
-{
-	char *filename = sox_cmd_wrap(sr, seconds, sample_len, "whitenoise", "whitenoise", 10);
-
-	// got pcm data in file. now use it
-	struct stat info;
-	stat(filename, &info);
-
-	unsigned int *samples = malloc(info.st_size);
-	FILE *fp = fopen(filename, "r");
-	if (fp == NULL) {
-		// file open failed
-		free(samples);
-		return NULL;
-	}
-	fread(samples, 1, info.st_size, fp);
-	fclose(fp);
-
-	// remove file after using it
-	snprintf(cmd, cmd_len, "rm %s.raw", filename);
-	system(cmd);
-
-	// release buffers
-	free(filename);
 }

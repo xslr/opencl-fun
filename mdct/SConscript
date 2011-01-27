@@ -1,0 +1,9 @@
+Import('env')
+
+localenv = env.Clone()
+
+libmdct = localenv.Library('mdct', ['mdct_2048.c'])
+Export('libmdct')
+
+localenv.Install('#/include', 'mdct.h')
+

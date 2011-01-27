@@ -215,6 +215,7 @@ float* fft2048(cl_context *ctx, cl_device_id *dev_id, int count, float data[])
 		fprintf(stderr, "Program built successfully.\n");
 	}
 	//}}}
+	free(build_log);
 
 	//{{{ create kernel object
 	krn_fft_rdx2 = clCreateKernel(prg_fft_rdx2, KRNL_NAM_FFT4, &err);

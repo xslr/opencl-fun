@@ -1,0 +1,11 @@
+Import('env')
+
+localenv = env.Clone()
+
+libcommon = localenv.Library('aaclcommon', ['clutil.c', 'sample_source.c'])
+common_headers = ['clutil.h', 'sample_source.h']
+
+localenv.Install('#/include', common_headers)
+
+Export('libcommon')
+

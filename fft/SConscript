@@ -1,9 +1,8 @@
-env = Environment()
-env.ParseConfig('pkg-config --cflags --libs glib-2.0')
-env.ParseConfig('pkg-config --cflags --libs fftw3')
+Import('env')
 
-env.Append( LIBS = 'OpenCL', CPPDEFINES = 'PROFILING' )
+localenv = env.Clone()
+
+env.ParseConfig('pkg-config --cflags --libs fftw3')
 
 env.Program( target='fft', source=["main.cpp"] )
 env.Program( target='fft_fftw', source=["fft_test_fftw.c"] )
-
