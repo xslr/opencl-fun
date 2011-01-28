@@ -148,6 +148,7 @@ float* fft2048(cl_context *ctx, cl_device_id *dev_id, int count, float data[])
 	char* log_bld_fft_rdx2 = (char*)malloc(max_sz_bld_log);
 
 	// size of overlapped output blocks is twice as input, and has one block less
+	// x2 because complex and real parts
 	size_t out_size = ((count-1) * (SIZE_DATA_BLK<<1) * sizeof(float)) <<1;
 	size_t in_size = count * SIZE_DATA_BLK * sizeof(float);
 	size_t local_work_size = 1024;

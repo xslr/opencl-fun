@@ -1,10 +1,12 @@
 Import('env')
+Import('libfft')
 Import('libmdct')
 Import('libcommon')
 
 localenv = env.Clone()
 
 mdct_test = localenv.Program('mdct_test', ['mdct_test.c', libmdct, libcommon])
+fft_test = localenv.Program('fft_test', ['fft_test.c', libfft, libcommon])
 
-Export('mdct_test')
-
+localenv.Install('#/build', mdct_test)
+localenv.Install('#/build', fft_test)

@@ -4,5 +4,11 @@ localenv = env.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs fftw3')
 
-env.Program( target='fft', source=["main.cpp"] )
-env.Program( target='fft_fftw', source=["fft_test_fftw.c"] )
+#env.Program( target='fft', source=["main.cpp"] )
+#env.Program( target='fft_fftw', source=["fft_test_fftw.c"] )
+
+libfft = localenv.Library('fft', ['fft.c'])
+Export('libfft')
+
+localenv.Install('#/include', 'fft.h')
+localenv.Install('#/build', 'fft_2048.cl')

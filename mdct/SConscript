@@ -6,4 +6,4 @@ libmdct = localenv.Library('mdct', ['mdct_2048.c'])
 Export('libmdct')
 
 localenv.Install('#/include', 'mdct.h')
-
+localenv.Install('#/build', 'mdct_2048.cl')
