@@ -11,25 +11,56 @@ char *sox_waveform_gen( unsigned int sr, float seconds, unsigned int freq, size_
 char *sox_noise_gen( unsigned int sr, float seconds, size_t sample_len,
 					 const char noise_type[], const char prefix[], size_t prefix_len);
 
-int tocsvf(float *data, size_t count, const char *filename, const char *outdir,
-		   const char *modname)
+int totxtf(float *data, size_t count, const char *separator,
+		   size_t rowlen, const char *rowmarker,
+		   const char *filename, const char *outdir, const char *modname)
 {
 	// TODO: use outdir
-	FILE *fp_csv = g_fopen(filename, "w");
-	if (fp_csv == NULL) {
+	FILE *fp = g_fopen(filename, "w");
+	if (fp == NULL) {
 		fprintf(stderr, "%s:: Failed to open %s for writing!!\n", modname, filename);
 		return -1;
 	}
 
 	size_t index;
 	for (index = 0; index < count; index++) {
-		fprintf(fp_csv, "%f", data[index]);
+		if (index != 0 && index%rowlen == 0)
+			fprintf(fp, "%s", rowmarker);
 
 		if (index < (count-1))
-			fprintf(fp_csv, "\n");
+			fprintf(fp, "%f%s", data[index], separator);
+		else
+			fprintf(fp, "%f", data[index]);
 	}
 
-	fclose(fp_csv);
+	fclose(fp);
+
+	return 0;
+}
+
+int totxtd(double *data, size_t count, const char *separator,
+		   size_t rowlen, const char *rowmarker,
+		   const char *filename, const char *outdir, const char *modname)
+{
+	// TODO: use outdir
+	FILE *fp = g_fopen(filename, "w");
+	if (fp == NULL) {
+		fprintf(stderr, "%s:: Failed to open %s for writing!!\n", modname, filename);
+		return -1;
+	}
+
+	size_t index;
+	for (index = 0; index < count; index++) {
+		if (index != 0 && index%rowlen == 0)
+			fprintf(fp, "%s", rowmarker);
+
+		if (index < (count-1))
+			fprintf(fp, "%f%s", data[index], separator);
+		else
+			fprintf(fp, "%f", data[index]);
+	}
+
+	fclose(fp);
 
 	return 0;
 }
@@ -43,6 +74,21 @@ float *get_zero(size_t count)
 		buf[count] = 0;
 	}
 	return buf;
+}
+
+float *get_seq(float delta, size_t count)
+{
+	float *data = malloc(count*sizeof(float));
+
+	float val = 0.0f;
+	size_t i;
+	for (i = 0; i < count; i++)
+	{
+		data[i] = val;
+		val += delta;
+	}
+
+	return data;
 }
 
 float *get_random(size_t count)

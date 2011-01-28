@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	float *result = mdct(2048, samples);
 	free(samples);
 
-	tocsvf(result, 1024, "data.txt", "out", "MDCT");
+	totxtf(result, 1024, ",", 1024, "\n", "data.txt", "out", "MDCT");
 	free(result);
 
 	return EXIT_SUCCESS;
