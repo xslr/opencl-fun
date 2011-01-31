@@ -24,13 +24,12 @@ int totxtf(float *data, size_t count, const char *separator,
 
 	size_t index;
 	for (index = 0; index < count; index++) {
-		if (index != 0 && index%rowlen == 0)
-			fprintf(fp, "%s", rowmarker);
+		fprintf(fp, "%f", data[index]);
 
-		if (index < (count-1))
-			fprintf(fp, "%f%s", data[index], separator);
-		else
-			fprintf(fp, "%f", data[index]);
+		if (index != 0 && (index+1)%rowlen == 0)
+			fprintf(fp, "%s", rowmarker);
+		else if (index < (count-1))
+			fprintf(fp, "%s", separator);
 	}
 
 	fclose(fp);
@@ -51,13 +50,12 @@ int totxtd(double *data, size_t count, const char *separator,
 
 	size_t index;
 	for (index = 0; index < count; index++) {
-		if (index != 0 && index%rowlen == 0)
-			fprintf(fp, "%s", rowmarker);
+		fprintf(fp, "%f", data[index]);
 
-		if (index < (count-1))
-			fprintf(fp, "%f%s", data[index], separator);
-		else
-			fprintf(fp, "%f", data[index]);
+		if (index != 0 && (index+1)%rowlen == 0)
+			fprintf(fp, "%s", rowmarker);
+		else if (index < (count-1))
+			fprintf(fp, "%s", separator);
 	}
 
 	fclose(fp);
@@ -136,7 +134,7 @@ float *get_sine_wave(unsigned int sr, float seconds, unsigned int freq)
 	// got pcm data in file. now load it into a buffer
 	float *buf;
 	size_t buf_size;
-	GError *gerr;
+	GError *gerr = NULL;
 	if (!g_file_get_contents( filename,
 							  (char**)&buf,
 							  &buf_size,
@@ -162,7 +160,7 @@ float *get_white_noise(unsigned int sr, float seconds)
 	// got pcm data in file. now use it
 	float *buf;
 	size_t buf_size;
-	GError *gerr;
+	GError *gerr = NULL;
 	if (!g_file_get_contents( filename,
 							  (char**)&buf,
 							  &buf_size,
@@ -183,18 +181,21 @@ char *sox_waveform_gen(unsigned int sr, float seconds, unsigned int freq, size_t
 					   const char shape[], const char prefix[], size_t prefix_len)
 {
 	size_t fname_len = prefix_len + 6 + 1;
-	char *filename = malloc((fname_len) * sizeof(char));
+	char *temp = malloc(fname_len);
+	char *filename = malloc(fname_len + 4);
 
-	snprintf(filename, fname_len, "%sXXXXXX", prefix);
+	snprintf(temp, fname_len, "%sXXXXXX", prefix);
 
 	// buffer for storing the sox command line
 	size_t cmd_len = 100 + fname_len;
 	char *cmd = malloc(cmd_len * sizeof(char));
 
-	filename = mktemp(filename);
-	if (filename[0] == 0) {
+	temp = mktemp(temp);
+	if (temp[0] == 0) {
 		// cannot create
 		return NULL;
+	} else {
+		snprintf(filename, fname_len + 4, "%s.raw", temp);
 	}
 
 	// create raw file of signal amplitudes encoded as floats
@@ -206,12 +207,15 @@ char *sox_waveform_gen(unsigned int sr, float seconds, unsigned int freq, size_t
 		fprintf(stderr, "Command buffer for SoX is too small.\n");
 	}
 
+	fprintf(stderr, "sox command line:\n%s\n", cmd);
+
 	ret = system(cmd);
 	if (ret != 0) {
 		// failed to generate wav file
 		return NULL;
 	}
 
+	free(temp);
 	free(cmd);
 
 	return filename;
@@ -221,18 +225,21 @@ char *sox_noise_gen(unsigned int sr, float seconds, size_t sample_len,
 					const char noise_type[], const char prefix[], size_t prefix_len)
 {
 	size_t fname_len = prefix_len + 6 + 1;
-	char *filename = malloc((fname_len) * sizeof(char));
+	char *temp = malloc(fname_len);
+	char *filename = malloc(fname_len + 4);
 
-	snprintf(filename, fname_len, "%sXXXXXX", prefix);
+	snprintf(temp, fname_len, "%sXXXXXX", prefix);
 
 	// buffer for storing the sox command line
 	size_t cmd_len = 100 + fname_len;
 	char *cmd = malloc(cmd_len * sizeof(char));
 
-	filename = mktemp(filename);
-	if (filename[0] == 0) {
+	temp = mktemp(temp);
+	if (temp[0] == 0) {
 		// cannot create
 		return NULL;
+	} else {
+		snprintf(filename, fname_len + 4, "%s.raw", temp);
 	}
 
 	// create raw file of signal amplitudes encoded as floats
@@ -250,6 +257,7 @@ char *sox_noise_gen(unsigned int sr, float seconds, size_t sample_len,
 		return NULL;
 	}
 
+	free(temp);
 	free(cmd);
 
 	return filename;
