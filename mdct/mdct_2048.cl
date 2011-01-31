@@ -125,20 +125,28 @@ __kernel void mdct_2048
 				 xp,
 				 xpp);
 
+	barrier(CLK_LOCAL_MEM_FENCE);
+
 	calc_ab( local_id,
 			 &xab[0],        // a: xab[0]
 			 &xab[512],      // b: xan[512]
 			 xp,
 			 xpp);
 
+	barrier(CLK_LOCAL_MEM_FENCE);
+
 	calc_z( local_id,
 			&xab[1024],      // z: xab[1024]
 			&xab[0],         // a: xab[0]
 			&xab[512]);      // b: xab[512]
 
+	barrier(CLK_LOCAL_MEM_FENCE);
+
 	calc_coeff( local_id,
 				&xab[0],     // c: xab[0]
 				&xab[1024]); // z: xab[1024]
+
+	barrier(CLK_LOCAL_MEM_FENCE);
 
 	upload_samples(out, &xab[0]);
 }
