@@ -155,7 +155,7 @@ float *get_sine_wave(unsigned int sr, float seconds, unsigned int freq)
 float *get_white_noise(unsigned int sr, float seconds)
 {
 	size_t sample_len = sizeof(float);
-	char *filename = sox_noise_gen(sr, seconds, sample_len, "whitenoise", "aacl_whitenoise", 10);
+	char *filename = sox_noise_gen(sr, seconds, sample_len, "whitenoise", "aacl_whitenoise", 17);
 
 	// got pcm data in file. now use it
 	float *buf;
@@ -250,6 +250,8 @@ char *sox_noise_gen(unsigned int sr, float seconds, size_t sample_len,
 		// command buffer for sox is too small
 		fprintf(stderr, "Command buffer for SoX is too small.\n");
 	}
+
+	fprintf(stderr, "sox command line:\n%s\n", cmd);
 
 	ret = system(cmd);
 	if (ret != 0) {
