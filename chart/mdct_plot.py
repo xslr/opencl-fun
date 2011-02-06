@@ -14,14 +14,34 @@ zoom = 2.5
 
 print "mdct_plot.py: MDCT output plotting script\n"
 
-if len(sys.argv) != 3:
-	print "\tUsage: ./mdct_plot.py source_file output_file"
+if len(sys.argv) < 3:
+	print "\tUsage: ./mdct_plot.py source_file output_image"
+	print "\tFor plotting difference in waveforms:\n\t  ./mdct_plot.py source_file_A source_file_B output_file"
 	exit(1)
 
-csvFile = open(sys.argv[1], 'r')
-csvReader = csv.reader(csvFile)
+if len(sys.argv) == 3:
+	sourceFile = sys.argv[1]
+	outputFile = sys.argv[2]
+	
+	csvFile = open(sourceFile, 'r')
+	csvReader = csv.reader(csvFile)
+	plotData = map(float, csvReader.next())
+	
+elif len(sys.argv) == 4:    # difference plotting
+	sourceFileA = sys.argv[1]
+	sourceFileB = sys.argv[2]
+	outputFile = sys.argv[3]
+	
+	csvFileA = open(sourceFileA, 'r')
+	csvFileB = open(sourceFileB, 'r')
 
-outputFile = sys.argv[2]
+	csvReader = csv.reader(csvFileA)
+	coeffA = map(float, csvReader.next())
+
+	csvReader = csv.reader(csvFileB)
+	coeffB = map(float, csvReader.next())
+
+	plotData = map((lambda x,y: (x-y)/y if y != 0 else 0), coeffA, coeffB)
 
 print "Using matplotlib version:", matplotlib.__version__
 
@@ -33,12 +53,7 @@ y = np.arange(-1, 12)
 z = [100*i for i in y]
 width = 0.1
 
-coeff = map(float, csvReader.next())
-
-#real = plt.bar(x, real, width, color='r')
-#cmplxBars = plt.bar(x+width, cmplx, width, color='b')
-
-plt.plot(x, coeff, 'k', antialiased=False)
+plt.plot(x, plotData, 'k', antialiased=False)
 plt.grid(True, 'major')
 plt.xticks(z, z)
 

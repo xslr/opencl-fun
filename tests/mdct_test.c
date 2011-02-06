@@ -10,44 +10,50 @@
 #include "mdct_vorbis.h"
 #include "sample_source.h"
 
-float *mdct_vorbis(float *in);
-static float *mdct_forward_brute(float *in, int N);
-
-int main(int argc, char *argv[])
+void set_fname( enum sigtype st,
+				char **f_result,
+				char **f_result_ref,
+				char **f_sample)
 {
-	float *samples;
-	//samples = getRandom(2048);
-	//samples = getAlt_1_0(2048);
-	//samples = get_seq(1, 2048);
-	samples = get_sine_wave(4000, 2, 500);
-	//samples = get_zero(2048);
-	//samples = get_white_noise(2000, 2);
+	switch (st) {
+	case ZERO:
+		*f_result = "out_mdct_ZERO.csv";
+		*f_sample = "spl_mdct_ZERO.csv";
+		*f_result_ref = "refout_mdct_ZERO.csv";
+		break;
+	case SINE:
+		*f_result = "out_mdct_SINE.csv";
+		*f_sample = "spl_mdct_SINE.csv";
+		*f_result_ref = "refout_mdct_SINE.csv";
+		break;
+	case SEQ:
+		*f_result = "out_mdct_SEQ.csv";
+		*f_sample = "spl_mdct_SEQ.csv";
+		*f_result_ref = "refout_mdct_SEQ.csv";
+		break;
+	case RANDOM:
+		*f_result = "out_mdct_RND.csv";
+		*f_sample = "spl_mdct_RND.csv";
+		*f_result_ref = "refout_mdct_RND.csv";
+		break;
+	case WHITE_NOISE:
+		*f_result = "out_mdct_WHITENOISE.csv";
+		*f_sample = "spl_mdct_WHITENOISE.csv";
+		*f_result_ref = "refout_mdct_WHITENOISE.csv";
+		break;
+	case ALT10:
+		*f_result = "out_mdct_ALT10.csv";
+		*f_sample = "spl_mdct_ALT10.csv";
+		*f_result_ref = "refout_mdct_ALT10.csv";
+		break;
 
-	float *result = mdct(2048, samples);
-	float *result_ref = mdct_forward_brute(samples, 2048);;
-	//float *result_ref = mdct_vorbis(samples);;
-
-	totxtf( result, 1024, ",", 1024, "\n", "mdct_out_gpu_sine.txt", "out", "MDCT");
-
-	totxtf( result_ref,
-			1024, ",",              // element count and separator
-			1024, "\n",             // line length and separator
-			"mdct_out_brute_sine.txt",     // output file
-			"out",                  // output dir
-			"MDCT");                // module name
-
-	totxtf( samples,
-			2048, ",",              // element count and separator
-			2048, "\n",             // line length and separator
-			"samples_sine.txt",     // output file
-			"out",                  // output dir
-			"MDCT");                // module name
-
-	free(samples);
-	free(result);
-	free(result_ref);
-
-	return EXIT_SUCCESS;
+	case UNKNOWN:
+		
+	default:
+		*f_result = NULL;
+		*f_sample = NULL;
+		*f_result_ref = NULL;
+	}
 }
 
 static float *mdct_forward_brute(float *in, int N)
@@ -65,7 +71,8 @@ static float *mdct_forward_brute(float *in, int N)
 			temp +=	in[n] * cos(
 								((2*n) + 1 + (N/2))
 								* ((2*k) + 1)
-								* (PI/(2*N)));
+								* (PI/(2*N))
+								);
 		}
 		out[k] = temp;
 	}
@@ -83,4 +90,56 @@ float *mdct_vorbis(float *in)
 	mdct_forward(&lookup, in, result);
 
 	return result;
+}
+
+int main(int argc, char *argv[])
+{
+	float *sample;
+	float *result;
+	float *result_ref;
+
+	char *f_sample;
+	char *f_result;
+	char *f_result_ref;
+
+	enum sigtype st;
+
+	st = get_signal(argc, argv, &sample);
+
+	if (st == UNKNOWN) {
+		fprintf(stderr, "Invalid or no signal type selected.\n");
+		return -1;
+	}
+
+	set_fname(st, &f_result, &f_result_ref, &f_sample);
+
+	result = mdct(2048, sample);
+	result_ref = mdct_forward_brute(sample, 2048);
+
+	totxtf( result,
+			1024, ",",
+			1024, "\n",
+			f_result,
+			"out",
+			"MDCT");
+
+	totxtf( result_ref,
+			1024, ",",              // element count and separator
+			1024, "\n",             // line length and separator
+			f_result_ref,           // output file
+			"out",                  // output dir
+			"MDCT");                // module name
+
+	totxtf( sample,
+			2048, ",",              // element count and separator
+			2048, "\n",             // line length and separator
+			f_sample,               // output file
+			"out",                  // output dir
+			"MDCT");                // module name
+
+	free(sample);
+	free(result);
+	free(result_ref);
+
+	return EXIT_SUCCESS;
 }

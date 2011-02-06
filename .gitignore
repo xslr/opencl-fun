@@ -22,3 +22,4 @@ build
 work
 *.pdf
 *.csv
+*.raw

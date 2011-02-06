@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <time.h>
 
 #include <glib.h>
@@ -263,4 +264,44 @@ char *sox_noise_gen(unsigned int sr, float seconds, size_t sample_len,
 	free(cmd);
 
 	return filename;
+}
+
+enum sigtype get_signal(int argc, char *argv[], float **buf)
+{
+	enum sigtype type;
+	int opt;
+
+	type = UNKNOWN;
+	*buf = NULL;
+
+	while ((opt = getopt(argc, argv, "ziqrot")) != -1) {
+		switch (opt) {
+		case 'z':
+			type = ZERO;
+			*buf = get_zero(2048);
+			break;
+		case 'i':
+			type = SINE;
+			*buf = get_sine_wave(4000, 2, 500);
+			break;
+		case 'q':
+			type = SEQ;
+			*buf = get_seq(1, 2048);
+			break;
+		case 'r':
+			type = RANDOM;
+			*buf = get_random(2048);
+			break;
+		case 'o':
+			type = WHITE_NOISE;
+			*buf = get_white_noise(2000, 2);
+			break;
+		case 't':
+			type = ALT10;
+			*buf = get_alt_1_0(2048);
+			break;
+		}
+	}
+
+	return type;
 }
