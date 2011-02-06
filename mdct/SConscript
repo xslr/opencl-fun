@@ -2,8 +2,10 @@ Import('env')
 
 localenv = env.Clone()
 
-libmdct = localenv.Library('mdct', ['mdct_2048.c'])
+#libmdct = localenv.Library('mdct', ['mdct_2048.c'])
+libmdct = localenv.Library('mdct', ['mdct_fft.c'])
 Export('libmdct')
 
 localenv.Install('#/include', 'mdct.h')
 localenv.Install('#/build', 'mdct_2048.cl')
+localenv.Install('#/build', 'mdct_fft.cl')

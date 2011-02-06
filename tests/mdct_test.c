@@ -19,12 +19,13 @@ int main(int argc, char *argv[])
 	//samples = getRandom(2048);
 	//samples = getAlt_1_0(2048);
 	//samples = get_seq(1, 2048);
-	samples = get_sine_wave(2000, 2, 500);
+	samples = get_sine_wave(4000, 2, 500);
 	//samples = get_zero(2048);
 	//samples = get_white_noise(2000, 2);
 
 	float *result = mdct(2048, samples);
 	float *result_ref = mdct_forward_brute(samples, 2048);;
+	//float *result_ref = mdct_vorbis(samples);;
 
 	totxtf( result, 1024, ",", 1024, "\n", "mdct_out_gpu_sine.txt", "out", "MDCT");
 

@@ -7,6 +7,8 @@ localenv = env.Clone()
 
 mdct_test = localenv.Program('mdct_test', ['mdct_test.c', 'mdct_vorbis.c', libmdct, libcommon])
 fft_test = localenv.Program('fft_test', ['fft_test.c', libfft, libcommon])
+mdct_fft_cpu = localenv.Program('mdct_fft_cpu', ['mdct_fft_trial.c', libcommon])
 
 localenv.Install('#/build', mdct_test)
 localenv.Install('#/build', fft_test)
+localenv.Install('#/build', mdct_fft_cpu)

@@ -10,8 +10,6 @@ import matplotlib.pyplot as plt
 from matplotlib.pylab import *
 import numpy as np
 
-# TODO: add output file option
-
 zoom = 2.5
 
 print "mdct_plot.py: MDCT output plotting script\n"

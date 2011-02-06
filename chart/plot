@@ -1,0 +1,4 @@
+#!/bin/bash
+
+./mdct_plot.py /home/munu/fyp/code/build/mdct_out_gpu_sine.txt  mdct_out_gpu_sine.pdf && evince mdct_out_gpu_sine.pdf &
+./mdct_plot.py /home/munu/fyp/code/build/mdct_out_brute_sine.txt  mdct_out_brute_sine.pdf && evince mdct_out_brute_sine.pdf &

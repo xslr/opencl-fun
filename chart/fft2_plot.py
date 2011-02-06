@@ -28,9 +28,9 @@ print "Using matplotlib version:", matplotlib.__version__
 matplotlib.rcParams['font.family'] = 'Consolas'
 matplotlib.rcParams['font.size'] = 12*zoom
 
-x = np.arange(2048)
+x = np.arange(512)
 y = np.arange(-1, 12)
-z = [200*i for i in y]
+z = [50*i for i in y]
 width=0.1
 
 real = map(float, csvReader.next())
