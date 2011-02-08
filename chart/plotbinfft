@@ -1,0 +1,14 @@
+#!/bin/bash
+
+
+for signal in 'ZERO' 'SINE' 'SEQ' 'RND' 'WHITENOISE' 'ALT10'; do
+	# plot gpu output
+	./fftbinplot.py "../exec/out_fft_$signal.bin" "./plot/gpu_fft_$signal.pdf" &
+
+	# plot reference output
+	./fftbinplot.py "../exec/refout_fft_$signal.bin" "./plot/ref_fft_$signal.pdf" &
+	
+	# plot difference
+	./fftbinplot.py "../exec/out_fft_$signal.bin" "../exec/refout_fft_$signal.bin" "./plot/diff_fft_$signal.pdf" &
+done
+

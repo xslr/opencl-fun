@@ -1,0 +1,13 @@
+#!/bin/bash
+
+for signal in 'ZERO' 'SINE' 'SEQ' 'RND' 'WHITENOISE' 'ALT10'; do
+	# plot gpu output
+	./mdctbinplot.py "../exec/out_mdct_$signal.bin" "./plot/gpu_mdct_$signal.pdf" &
+
+	# plot reference output
+	./mdctbinplot.py "../exec/refout_mdct_$signal.bin" "./plot/ref_mdct_$signal.pdf" &
+	
+	# plot difference
+	./mdctbinplot.py "../exec/out_mdct_$signal.bin" "../exec/refout_mdct_$signal.bin" "./plot/diff_mdct_$signal.pdf" &
+done
+

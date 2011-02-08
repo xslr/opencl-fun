@@ -1,0 +1,16 @@
+#!/bin/bash
+
+for signal in 'ZERO' 'SINE' 'SEQ' 'RND' 'WHITENOISE' 'ALT10'; do
+
+	./fftbinstats.py ../exec/out_fft_$signal.bin ../exec/refout_fft_$signal.bin
+	
+	# plot gpu output
+	#./fft_plot.py "../exec/out_fft_$signal.csv" "./plot/gpu_fft_$signal.pdf"
+
+	# plot reference output
+	#./fft_plot.py "../exec/refout_fft_$signal.csv" "./plot/ref_fft_$signal.pdf"
+	
+	# plot difference
+	#./fft_plot.py "../exec/out_fft_$signal.csv" "../exec/refout_fft_$signal.csv" "./plot/diff_fft_$signal.pdf"
+done
+

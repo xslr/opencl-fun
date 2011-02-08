@@ -38,6 +38,24 @@ int totxtf(float *data, size_t count, const char *separator,
 	return 0;
 }
 
+
+int tobinf(float *data, size_t count,
+		   const char *filename, const char *outdir, const char *modname)
+{
+	// TODO: use outdir
+	FILE *fp = g_fopen(filename, "wb");
+	if (fp == NULL) {
+		fprintf(stderr, "%s:: Failed to open %s for writing!!\n", modname, filename);
+		return -1;
+	}
+
+	fwrite(data, sizeof(float), count, fp);
+
+	fclose(fp);
+
+	return 0;
+}
+
 int totxtd(double *data, size_t count, const char *separator,
 		   size_t rowlen, const char *rowmarker,
 		   const char *filename, const char *outdir, const char *modname)
@@ -107,7 +125,7 @@ float *get_random(size_t count)
 float *get_alt_1_0(size_t count)
 {
 	float *buf = malloc(sizeof(float) * count);
-
+	/*
 	size_t float_bit_len = sizeof(float) << 3;
 
 	unsigned int pilot = 0;
@@ -118,9 +136,11 @@ float *get_alt_1_0(size_t count)
 
 		--float_bit_len;
 	}
-
+	*/
+	// value for alternate binary digits from:
+	//     http://www.digitconvert.com/
 	while (count > 0){
-		buf[--count] = pilot;
+		buf[--count] = 2863311530.0f;
 	}
 
 	return buf;

@@ -27,6 +27,9 @@ int totxtd(double *data, size_t count, const char *separator,
 		   size_t rowlen, const char *rowmarker,
 		   const char *filename, const char *outdir, const char *modname);
 
+int tobinf(float *data, size_t count,
+		   const char *filename, const char *outdir, const char *modname);
+
 float *get_zero(size_t count);
 
 float *get_seq(float delta, size_t count);

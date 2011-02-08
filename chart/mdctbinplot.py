@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import csv
 import sys
 import matplotlib
+import array as ar
 
 matplotlib.use('cairo.pdf')
 
@@ -11,6 +11,7 @@ from matplotlib.pylab import *
 import numpy as np
 
 zoom = 3
+epsilon = 0
 
 print "mdct_plot.py: MDCT output plotting script\n"
 
@@ -23,25 +24,25 @@ if len(sys.argv) == 3:
 	sourceFile = sys.argv[1]
 	outputFile = sys.argv[2]
 	
-	csvFile = open(sourceFile, 'r')
-	csvReader = csv.reader(csvFile)
-	plotData = map(float, csvReader.next())
+	fp = open(sourceFile, 'rb')
+	plotData = ar.array('f')
+	plotData.fromfile(fp, 1024)
 	
 elif len(sys.argv) == 4:    # difference plotting
 	sourceFileA = sys.argv[1]
 	sourceFileB = sys.argv[2]
 	outputFile = sys.argv[3]
 	
-	csvFileA = open(sourceFileA, 'r')
-	csvFileB = open(sourceFileB, 'r')
+	filea = open(sourceFileA, 'rb')
+	fileb = open(sourceFileB, 'rb')
 
-	csvReader = csv.reader(csvFileA)
-	coeffA = map(float, csvReader.next())
+	coeffA = ar.array('f')
+	coeffA.fromfile(filea, 1024)
 
-	csvReader = csv.reader(csvFileB)
-	coeffB = map(float, csvReader.next())
+	coeffB = ar.array('f')
+	coeffB.fromfile(fileb, 1024)
 
-	plotData = map((lambda x,y: (x-y)/y if abs(y) > 0.0000001 else 0), coeffA, coeffB)
+	plotData = map((lambda x,y: (x-y)/y if abs(y) > epsilon else 0), coeffA, coeffB)
 
 print "Using matplotlib version:", matplotlib.__version__
 

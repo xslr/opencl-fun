@@ -2,12 +2,12 @@
 
 for signal in 'ZERO' 'SINE' 'SEQ' 'RND' 'WHITENOISE' 'ALT10'; do
 	# plot gpu output
-	./mdct_plot.py "../exec/out_mdct_$signal.csv" "./plot/gpu_mdct_$signal.pdf"
+	./mdct_plot.py "../exec/out_mdct_$signal.csv" "./plot/gpu_mdct_$signal.pdf" &
 
 	# plot reference output
-	./mdct_plot.py "../exec/refout_mdct_$signal.csv" "./plot/ref_mdct_$signal.pdf"
+	./mdct_plot.py "../exec/refout_mdct_$signal.csv" "./plot/ref_mdct_$signal.pdf" &
 	
 	# plot difference
-	./mdct_plot.py "../exec/out_mdct_$signal.csv" "../exec/refout_mdct_$signal.csv" "./plot/diff_mdct_$signal.pdf"
+	./mdct_plot.py "../exec/out_mdct_$signal.csv" "../exec/refout_mdct_$signal.csv" "./plot/diff_mdct_$signal.pdf" &
 done
 

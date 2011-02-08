@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import csv
 import sys
 import matplotlib
+import array as ar
 
 matplotlib.use('cairo.pdf')
 
@@ -24,29 +24,36 @@ if len(sys.argv) == 3:
 	sourceFile = sys.argv[1]
 	outputFile = sys.argv[2]
 	
-	csvFile = open(sourceFile, 'r')
-	csvReader = csv.reader(csvFile)
-	plotData_r = map(float, csvReader.next())
-	plotData_c = map(float, csvReader.next())
+	fp = open(sourceFile, 'rb')
+
+	plotData_r = ar.array('f')
+	plotData_i = ar.array('f')
+
+	plotData_r.fromfile(fp, 2048)
+	plotData_i.fromfile(fp, 2048)
 	
 elif len(sys.argv) == 4:   # difference plotting
 	sourceFileA = sys.argv[1]
 	sourceFileB = sys.argv[2]
 	outputFile = sys.argv[3]
 	
-	csvFileA = open(sourceFileA, 'r')
-	csvFileB = open(sourceFileB, 'r')
+	filea = open(sourceFileA, 'rb')
+	fileb = open(sourceFileB, 'rb')
 
-	csvReader = csv.reader(csvFileA)
-	A_r = map(float, csvReader.next())
-	A_i = map(float, csvReader.next())
+	A_r = ar.array('f')
+	A_i = ar.array('f')
 
-	csvReader = csv.reader(csvFileB)
-	B_r = map(float, csvReader.next())
-	B_i = map(float, csvReader.next())
+	A_r.fromfile(filea, 2048)
+	A_i.fromfile(filea, 2048)
 
-	plotData_r = map((lambda x,y: (x-y)/y if abs(y) > epsilon else 0), A_r, B_r)
-	plotData_c = map((lambda x,y: (x-y)/y if abs(y) > epsilon else 0), A_i, B_i)
+	B_r = ar.array('f')
+	B_i = ar.array('f')
+
+	B_r.fromfile(fileb, 2048)
+	B_i.fromfile(fileb, 2048)
+
+	plotData_r = map((lambda x,y: (x-y)/y if y != 0 else 0), A_r, B_r)
+	plotData_i = map((lambda x,y: (x-y)/y if y != 0 else 0), A_i, B_i)
 
 
 
@@ -70,7 +77,7 @@ plt.xticks(z, z)
 ylabel('Real ')
 
 cmplxPlot = subplot(212)
-cmplxPlot.plot(x, plotData_c, 'k', antialiased=True)
+cmplxPlot.plot(x, plotData_i, 'k', antialiased=True)
 cmplxPlot.grid(True, 'major')
 plt.xticks(z, z)
 ylabel('Complex')

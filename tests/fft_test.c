@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <fftw3.h>
 
-void set_fname( enum sigtype st,
-				char **f_result,
-				char **f_result_ref,
-				char **f_sample)
+void set_fname_csv( enum sigtype st,
+					char **f_result,
+					char **f_result_ref,
+					char **f_sample)
 {
 	switch (st) {
 	case ZERO:
@@ -39,6 +39,52 @@ void set_fname( enum sigtype st,
 		*f_result = "out_fft_ALT10.csv";
 		*f_sample = "spl_fft_ALT10.csv";
 		*f_result_ref = "refout_fft_ALT10.csv";
+		break;
+
+	case UNKNOWN:
+		
+	default:
+		*f_result = NULL;
+		*f_sample = NULL;
+		*f_result_ref = NULL;
+	}
+}
+
+void set_fname_bin( enum sigtype st,
+					char **f_result,
+					char **f_result_ref,
+					char **f_sample)
+{
+	switch (st) {
+	case ZERO:
+		*f_result = "out_fft_ZERO.bin";
+		*f_sample = "spl_fft_ZERO.bin";
+		*f_result_ref = "refout_fft_ZERO.bin";
+		break;
+	case SINE:
+		*f_result = "out_fft_SINE.bin";
+		*f_sample = "spl_fft_SINE.bin";
+		*f_result_ref = "refout_fft_SINE.bin";
+		break;
+	case SEQ:
+		*f_result = "out_fft_SEQ.bin";
+		*f_sample = "spl_fft_SEQ.bin";
+		*f_result_ref = "refout_fft_SEQ.bin";
+		break;
+	case RANDOM:
+		*f_result = "out_fft_RND.bin";
+		*f_sample = "spl_fft_RND.bin";
+		*f_result_ref = "refout_fft_RND.bin";
+		break;
+	case WHITE_NOISE:
+		*f_result = "out_fft_WHITENOISE.bin";
+		*f_sample = "spl_fft_WHITENOISE.bin";
+		*f_result_ref = "refout_fft_WHITENOISE.bin";
+		break;
+	case ALT10:
+		*f_result = "out_fft_ALT10.bin";
+		*f_sample = "spl_fft_ALT10.bin";
+		*f_result_ref = "refout_fft_ALT10.bin";
 		break;
 
 	case UNKNOWN:
@@ -104,7 +150,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	set_fname(st, &f_result, &f_result_ref, &f_sample);
+	set_fname_csv(st, &f_result, &f_result_ref, &f_sample);
 
 	result = fft(2048, sample);
 	result_ref = calc_fft_fftw(sample, 2048);
@@ -126,6 +172,26 @@ int main(int argc, char *argv[])
 	totxtf( sample,
 			2048, ",",
 			2048, "\n",
+			f_sample,
+			"out",
+			"FFT");
+
+	set_fname_bin(st, &f_result, &f_result_ref, &f_sample);
+	// binary output
+	tobinf( result,
+			4096,
+			f_result,
+			"out",
+			"FFT");
+
+	tobinf( result_ref,
+			4096,
+			f_result_ref,
+			"out",
+			"FFT");
+
+	tobinf( sample,
+			2048,
 			f_sample,
 			"out",
 			"FFT");
