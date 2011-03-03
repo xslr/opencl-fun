@@ -4,13 +4,10 @@
  * 2048 point FFT computation kernel.
  * This has been developed on an nVidia 460GTX with 1024 MB global memory and 48 KB local memory.
  * It uses 16 KB of local memory
- * It computes two 1024 point FFTs using 1024 threads and then computes two
- * 2048 point partial FFTs in 'fft_2048_interleave' that together compute a 2048
- * point FFT.
  *
  * History: 24/8/2010 // Subrat Meher: Initial working version
- * 			07/10/2010 // Subrat Meher: Optimized for Fermi class GPUs.
- *										Dropped support for previous architectures.
+ *          07/10/2010 // Subrat Meher: Optimized for Fermi class GPUs.
+ *                                      Dropped support for previous architectures.
  *
  */
 

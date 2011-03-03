@@ -61,6 +61,9 @@ plt.plot(x, plotData, 'k', antialiased=False)
 plt.grid(True, 'major')
 plt.xticks(z, z)
 
+plt.ylabel('MDCT coefficient value')
+plt.xlabel('coefficient index')
+
 fig = plt.gcf()
 defaultSize = fig.get_size_inches()
 fig.set_figwidth(defaultSize[0]*zoom)

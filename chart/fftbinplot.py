@@ -52,8 +52,8 @@ elif len(sys.argv) == 4:   # difference plotting
 	B_r.fromfile(fileb, 2048)
 	B_i.fromfile(fileb, 2048)
 
-	plotData_r = map((lambda x,y: (x-y)/y if y != 0 else 0), A_r, B_r)
-	plotData_i = map((lambda x,y: (x-y)/y if y != 0 else 0), A_i, B_i)
+	plotData_r = map((lambda x,y: (x-y)/y if y > epsilon else 0), A_r, B_r)
+	plotData_i = map((lambda x,y: (x-y)/y if y > epsilon else 0), A_i, B_i)
 
 
 
@@ -73,15 +73,14 @@ realPlot = subplot(211)
 realPlot.plot(x, plotData_r, 'k', antialiased=False)
 realPlot.grid(True, 'major')
 plt.xticks(z, z)
-#title('')
-ylabel('Real ')
+ylabel('real component value')
 
 cmplxPlot = subplot(212)
 cmplxPlot.plot(x, plotData_i, 'k', antialiased=True)
 cmplxPlot.grid(True, 'major')
 plt.xticks(z, z)
-ylabel('Complex')
-xlabel('index')
+xlabel('coefficient index')
+ylabel('complex component value')
 
 fig = plt.gcf()
 defaultSize = fig.get_size_inches()
