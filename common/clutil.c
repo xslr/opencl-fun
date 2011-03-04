@@ -63,6 +63,12 @@ void init_cl(aacl_kernel_ctx *ctx, DevInfo *info, const char *modname)
 		ctx = NULL;
 	}
 
+	ctx->cmd_queue = clCreateCommandQueue( ctx->cl_ctx,
+										   info->dev_id,
+										   CL_QUEUE_PROFILING_ENABLE,
+										   &err);
+	check_cl_err(err, modname, "CommandQueue::Create");
+
 	fprintf(stderr, "Got %i platforms.\n", num_platforms);
 	fprintf(stderr, "Got %i GPU and %i CPU devices.\n", num_gpu_devs, num_cpu_devs);
 }
@@ -286,9 +292,10 @@ int check_cl_err(cl_int err, const char *modname, const char *message)
 
 void buffer_create(float *samples, aacl_kernel_ctx *ctx, const char *modname)
 {
+	fprintf(stderr, "in_count:%d\n", ctx->in_count);
 	cl_int err;
 	ctx->in = clCreateBuffer( ctx->cl_ctx,
-							  CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
+							  CL_MEM_READ_ONLY,
 							  ctx->in_count * sizeof(float),
 							  samples,
 							  &err);
@@ -379,29 +386,24 @@ int build_kernel(char* kernel_path, const char *kernel_name, aacl_kernel_ctx *ct
 	return 0;
 }
 
-void enqueue_kernel(aacl_kernel_ctx *ctx,
+void enqueue_kernel(aacl_kernel_ctx *ctx, cl_event *ev,
 					DevInfo *info, const char *modname)
 {
 	cl_int err;
 
-	ctx->cmd_queue = clCreateCommandQueue( ctx->cl_ctx,
-										   info->dev_id,
-										   CL_QUEUE_PROFILING_ENABLE,
-										   &err);
-	check_cl_err(err, modname, "CommandQueue::Create");
-
-	cl_event kernel_exec_event;
 	err = clEnqueueNDRangeKernel( ctx->cmd_queue,
 								  ctx->kernel,
 								  1,
 								  NULL,
 								  &ctx->ws_global,
 								  &ctx->ws_local,
-								  0, NULL, &kernel_exec_event);
+								  0, NULL,
+								  ev);
+
 	check_cl_err(err, modname, "Kernel::Enqueue");
 }
 
-float *download_result(aacl_kernel_ctx *ctx,
+float *download_result(aacl_kernel_ctx *ctx, cl_event *ev,
 						const char *modname)
 {
 	cl_int err;
@@ -417,7 +419,8 @@ float *download_result(aacl_kernel_ctx *ctx,
 							   result_size,
 							   result,
 							   0, NULL,
-							   NULL);
+							   ev);
+
 	check_cl_err(err, modname, "Results::Read");
 
 	clFinish(ctx->cmd_queue);
@@ -426,16 +429,17 @@ float *download_result(aacl_kernel_ctx *ctx,
 	return result;
 }
 
-void *upload_samples(float *samples, aacl_kernel_ctx *ctx)
+void upload_samples(aacl_kernel_ctx *ctx, cl_event *ev,
+					float *samples)
 {
 	clEnqueueWriteBuffer( ctx->cmd_queue,
-						 ctx->in,
-						 CL_TRUE,
-						 0,
-						 ctx->in_count*sizeof(float),
-						 samples,
-						 0, NULL,
-						 NULL);
+						  ctx->in,
+						  CL_TRUE,
+						  0,
+						  ctx->in_count*sizeof(float),
+						  samples,
+						  0, NULL,
+						  ev);
 }
 
 void dump_aacl_kernel_ctx(aacl_kernel_ctx *ctx)

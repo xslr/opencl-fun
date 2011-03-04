@@ -159,7 +159,8 @@ int main(int argc, char *argv[])
 
 	set_fname_csv(st, &f_result, &f_result_ref, &f_sample);
 
-	result = mdct(2048, sample);
+	result = mdct(2048, sample,
+				  NULL, NULL, NULL, 0);
 	result_ref = mdct_forward_brute(sample, 2048);
 
 	totxtf( result,

@@ -2,7 +2,7 @@
 env = Environment()
 Repository('./common')
 env.ParseConfig('pkg-config --cflags --libs glib-2.0')
-env.Append( LIBS='OpenCL', CPPDEFINES='PROFILING', CPPPATH='#/include', CFLAGS = Split("-g -O0 -Wall"))
+env.Append( LIBS='OpenCL', CPPPATH='#/include', CFLAGS = Split("-g -O0 -Wall"))
 env.Append()
 
 Export('env')

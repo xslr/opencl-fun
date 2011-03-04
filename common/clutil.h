@@ -50,7 +50,8 @@ typedef struct {
 	size_t out_count;
 } aacl_kernel_ctx;
 
-void init_cl(aacl_kernel_ctx *ctx, DevInfo *info, const char *modname);
+void init_cl(aacl_kernel_ctx *ctx,
+			 DevInfo *info, const char *modname);
 
 void close_cl(cl_context *ctx);
 
@@ -66,11 +67,14 @@ void buffer_create(float *samples, aacl_kernel_ctx *ctx, const char *modname);
 int build_kernel(char* kernel_path, const char *kernel_name,
 				  aacl_kernel_ctx *ctx, DevInfo *info, const char *modname);
 
-void enqueue_kernel(aacl_kernel_ctx *ctx, DevInfo *info, const char *modname);
+void enqueue_kernel(aacl_kernel_ctx *ctx, cl_event *ev,
+					DevInfo *info, const char *modname);
 
-float *download_result(aacl_kernel_ctx *ctx, const char *modname);
+float *download_result(aacl_kernel_ctx *ctx, cl_event *ev,
+					   const char *modname);
 
-void *upload_samples(float *samples, aacl_kernel_ctx *ctx);
+void upload_samples(aacl_kernel_ctx *ctx, cl_event *ev,
+					 float *samples);
 
 void dump_aacl_kernel_ctx(aacl_kernel_ctx *ctx);
 

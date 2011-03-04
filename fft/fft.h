@@ -3,6 +3,10 @@
 
 #include <stdlib.h>
 
-extern float *fft(size_t count, float *samples);
+#define BLK_SIZE 1024
+
+extern float *fft(size_t count, float *samples,
+				  double *time_upload, double *time_exec, double *time_download,
+				  int profiling);
 
 #endif

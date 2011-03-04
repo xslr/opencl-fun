@@ -152,7 +152,8 @@ int main(int argc, char *argv[])
 
 	set_fname_csv(st, &f_result, &f_result_ref, &f_sample);
 
-	result = fft(2048, sample);
+	result = fft(2048, sample,
+				 NULL, NULL, NULL, 0);
 	result_ref = calc_fft_fftw(sample, 2048);
 
 	totxtf( result,
