@@ -187,17 +187,6 @@ void arrange_output( __local float *r,
 					 __local float *out,
 					 size_t lid)
 {
-	/*
-	out[lid << 1] = 0;
-	out[1024 - (lid<<1) - 1] = 0;
-
-	lid += 256;
-
-	out[lid << 1] = 0;
-	out[1024 - (lid<<1) - 1] = 0;
-	*/
-
-
 	out[lid << 1] = r[lid];
 	out[1024 - (lid<<1) - 1] = -1 * i[lid];
 
@@ -211,11 +200,11 @@ void arrange_output( __local float *r,
 void upload_result( __local  float *in,
 					__global float *out)
 {
-	out += get_group_id(0) << 10;
-
 	event_t ev;
 
-	ev = async_work_group_copy( out,
+	__private size_t grp_id = get_group_id(0);
+
+	ev = async_work_group_copy( out + (grp_id << 10),
 								in,
 								(size_t)1024,
 								0);

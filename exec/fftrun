@@ -1,6 +1,0 @@
-#!/bin/bash
-
-for signal in 'z' 'i' 'q' 'r' 'o' 't'; do
-	../build/fft_test -$signal
-done
-

@@ -54,16 +54,16 @@ __kernel void fft_2048( __global float *in,
 		__global float *i_out = out + ((get_num_groups(0))<<11);
 
 		// copy imaginary components to global mem
-		async_work_group_copy (i_out + (grp_id << 11),
-							   &i_buf[0],
-							   (size_t)2048,
-							   ev);
+		ev = async_work_group_copy (i_out + (grp_id << 11),
+									&i_buf[0],
+									(size_t)2048,
+									0);
 
 		// copy real components to global mem
-		async_work_group_copy (out + (grp_id << 11),
-							   &r_buf[0],
-							   (size_t)2048,
-							   ev);
+		ev = async_work_group_copy (out + (grp_id << 11),
+									&r_buf[0],
+									(size_t)2048,
+									ev);
 		wait_group_events (1, &ev);
 	}
 

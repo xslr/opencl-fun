@@ -1,0 +1,14 @@
+#!/bin/bash
+
+START=100
+STEP=100
+END=100000
+
+RESULT='mdct_perf.csv'
+
+touch $RESULT
+truncate --size 0 $RESULT
+
+for blk_count in `seq $START $STEP $END`; do
+	../build/mdct_perf $blk_count >> $RESULT
+done

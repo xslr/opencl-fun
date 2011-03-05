@@ -14,13 +14,11 @@
 // size of input blocks
 #define BLK_SIZE 1024
 
-static float *mdct_forward_brute(float *in, int N, int num_blk,
-								 double *time_us)
+static void mdct_forward_brute(float *in, int N, int num_blk,
+								 float *time_us)
 {
 	// Very slow implementation for brute force testing
 	struct timespec start, end;
-
-	float *out = malloc(N * sizeof(float)/2);
 
 	int k, n;
 	float temp;
@@ -35,18 +33,15 @@ static float *mdct_forward_brute(float *in, int N, int num_blk,
 								* (PI/(2*N))
 								);
 		}
-		out[k] = temp;
 	}
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
 
-	*time_us = (double)(end.tv_sec - start.tv_sec) * (double)1000000.0f;
-	*time_us += (double)(end.tv_nsec - start.tv_nsec) / (double)1000.0f;
-
-	return out;
+	*time_us = (end.tv_sec - start.tv_sec) * 1000000;
+	*time_us += (float)(end.tv_nsec - start.tv_nsec) / 1000.0f;
 }
 
-float *mdct_vorbis(float *in, int N, int num_blk,
-				   double *time_init, double *time_exec)
+void mdct_vorbis(float *in, int N, int num_blk,
+				 float *time_init, float *time_exec)
 {
 	struct timespec init_start, init_end,
 		exec_start, exec_end;
@@ -58,8 +53,8 @@ float *mdct_vorbis(float *in, int N, int num_blk,
 	mdct_init(&lookup, 2048);
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &init_end);
 
-	*time_init = (double)(init_end.tv_sec - init_start.tv_sec) * (double)1000000.0;
-	*time_init += (double)(init_end.tv_nsec - init_start.tv_nsec) / (double)1000.0;
+	*time_init = (float)(init_end.tv_sec - init_start.tv_sec) * 1000000.0f;
+	*time_init += (float)(init_end.tv_nsec - init_start.tv_nsec) / 1000.0f;
 
 	int i;
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &exec_start);
@@ -68,10 +63,10 @@ float *mdct_vorbis(float *in, int N, int num_blk,
 	}
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &exec_end);
 
-	*time_exec = (double)(exec_end.tv_sec - exec_start.tv_sec) * (double)1000000.0;
-	*time_exec += (double)(exec_end.tv_nsec - exec_start.tv_nsec) / (double)1000.0;
-	
-	return result;
+	*time_exec = (exec_end.tv_sec - exec_start.tv_sec) * 1000000;
+	*time_exec += (float)(exec_end.tv_nsec - exec_start.tv_nsec) / 1000.0f;
+
+	free(result);
 }
 
 int getSignal(int argc, char *argv[], float **buf)
@@ -84,21 +79,28 @@ int getSignal(int argc, char *argv[], float **buf)
 	return count;
 }
 
-void print_timings(double time_gpu_upload,
-				   double time_gpu_download,
-				   double time_gpu_exec,
-				   double time_gpu_total,
-				   double time_vorbis_init,
-				   double time_vorbis_exec,
-				   double time_vorbis_total,
-				   double time_brute)
+void print_timings(int count,
+				   float time_gpu_upload,
+				   float time_gpu_download,
+				   float time_gpu_exec,
+				   float time_gpu_total,
+				   float time_vorbis_init,
+				   float time_vorbis_exec,
+				   float time_vorbis_total,
+				   float time_brute)
 {
-	printf("GPU (us): %f\n\tUL:%f\tEX:%f\tDL:%f\n",
+	// GPU: total, upload, execute, download
+	printf("%d,%f,%f,%f,%f",
+		   count,
 		   time_gpu_total, time_gpu_upload, time_gpu_exec, time_gpu_download);
-	printf("VORBIS (us): %f\n\tPLAN:%f\tEX:%f\n",
+	// VORBIS: total, init, execute
+	printf(",%f,%f,%f",
 		   time_vorbis_total, time_vorbis_init, time_vorbis_exec);
-	printf("BRUTE (us): %f\n",
+	// BRUTE: total
+	printf(",%f",
 		   time_brute);
+
+	printf("\n");
 }
 
 int main(int argc, char *argv[])
@@ -111,11 +113,8 @@ int main(int argc, char *argv[])
 	int count;
 
 	float *sample;
-	float *result;
-	float *result_ref;
-	float *result_vorbis;
 
-	double time_gpu_upload,
+	float time_gpu_upload,
 		time_gpu_download,
 		time_gpu_exec,
 		time_gpu,
@@ -126,23 +125,21 @@ int main(int argc, char *argv[])
 
 	count = getSignal(argc, argv, &sample);
 
-	result = mdct(count, sample,
+	mdct(count, sample,
 				  &time_gpu_upload, &time_gpu_exec, &time_gpu_download,
 				  1);
-	result_ref = mdct_forward_brute(sample, count, count/2048,
-									&time_brute);
-	result_vorbis = mdct_vorbis(sample, count, count/2048,
+	//	mdct_forward_brute(sample, count, count/2048,
+	//								&time_brute);
+	mdct_vorbis(sample, count, count/2048,
 								&time_vorbis_init, &time_vorbis_exec);
 
 	free(sample);
-	free(result);
-	free(result_ref);
-	free(result_vorbis);
 
 	time_gpu = time_gpu_upload + time_gpu_exec + time_gpu_download;
 	time_vorbis = time_vorbis_init + time_vorbis_exec;
 
-	print_timings(time_gpu_upload, time_gpu_download, time_gpu_exec, time_gpu,
+	print_timings(count/1024 - 1,
+				  time_gpu_upload, time_gpu_download, time_gpu_exec, time_gpu,
 				  time_vorbis_init, time_vorbis_exec, time_vorbis,
 				  time_brute);
 

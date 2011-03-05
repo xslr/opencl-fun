@@ -9,7 +9,7 @@
 #include "clutil.h"
 
 float *fft(size_t count, float *samples,
-		   double *time_upload, double *time_exec, double *time_download,
+		   float *time_upload, float *time_exec, float *time_download,
 		   int profiling)
 {
 	DevInfo info;
@@ -87,9 +87,9 @@ float *fft(size_t count, float *samples,
 								 &download_end,
 								 NULL);
 
-		*time_upload = (upload_end - upload_start) / 1000;
-		*time_exec = (exec_end - exec_start) / 1000;
-		*time_download = (download_end - download_start) / 1000;
+		*time_upload = (float)(upload_end - upload_start) / 1000.0f;
+		*time_exec = (float)(exec_end - exec_start) / 1000.0f;
+		*time_download = (float)(download_end - download_start) / 1000.0f;
 	} else {
 		upload_samples(&ctx, NULL, samples);
 		enqueue_kernel(&ctx, NULL, &info, "FFT");

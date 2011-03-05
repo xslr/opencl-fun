@@ -24,4 +24,4 @@ work
 *.csv
 *.raw
 *.bin
-
+exec/*

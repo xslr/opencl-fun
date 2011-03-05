@@ -4,55 +4,49 @@
 #include "sample_source.h"
 #include <stdlib.h>
 #include <fftw3.h>
-#include <sys/time.h>
+#include <time.h>
 
-float *calc_fft_fftw(float *data, size_t count,
-					 double *time_plan_us, double *time_exec_us)
+void calc_fft_fftw(float *data, size_t count, int num_blk,
+				   float *time_plan_us, float *time_exec_us)
 {
-	float *result;
 	fftw_complex *in, *out;
 	fftw_plan plan;
 
-	struct timeval plan_start,
+	struct timespec plan_start,
 		plan_end,
 		exec_start,
 		exec_end;
 
 	// buffer for holding the real and complex components of fft
-	result = malloc(count * 2 * sizeof(float));
-
-	in  = fftw_malloc(count*sizeof(fftw_complex));
-	out = fftw_malloc(count*sizeof(fftw_complex));
+	in  = fftw_malloc(2*BLK_SIZE*sizeof(fftw_complex));
+	out = fftw_malloc(2*BLK_SIZE*sizeof(fftw_complex));
 
 	size_t i;
-	for (i = 0; i < count; i++)
+	for (i = 0; i < BLK_SIZE*2; i++)
 	{
 		in[i][0] = data[i];
 		in[i][1] = 0;
 	}
 
-	gettimeofday(&plan_start, NULL);
-	plan = fftw_plan_dft_1d(count, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-	gettimeofday(&plan_end, NULL);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &plan_start);
+	plan = fftw_plan_dft_1d(BLK_SIZE*2, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &plan_end);
 
-	gettimeofday(&exec_start, NULL);
-	fftw_execute(plan);
-	gettimeofday(&exec_end, NULL);
+	// data elements are not important since we are only perf testing
+	// not necessary to updata data
+	// execute DFT num_blk times
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &exec_start);
+	for (i = 0; i < num_blk; i++) {
+		fftw_execute(plan);
+	}
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &exec_end);
 
 	fftw_destroy_plan(plan);
 
-	for (i = 0; i < count; i++)
-	{
-		result[i] = out[i][0];
-		result[i+2048] = out[i][1];
-	}
-
 	*time_plan_us = (plan_end.tv_sec - plan_start.tv_sec) * 1000000;
-	*time_plan_us += (plan_end.tv_usec - plan_start.tv_usec);
+	*time_plan_us += (float)(plan_end.tv_nsec - plan_start.tv_nsec) / 1000.0f;
 	*time_exec_us = (exec_end.tv_sec - exec_start.tv_sec) * 1000000;
-	*time_exec_us += (exec_end.tv_usec - exec_start.tv_usec);
-
-	return result;
+	*time_exec_us += (float)(exec_end.tv_nsec - exec_start.tv_nsec) / 1000.0f;
 }
 
 int getSignal(int argc, char *argv[], float **buf)
@@ -65,17 +59,21 @@ int getSignal(int argc, char *argv[], float **buf)
 	return count;
 }
 
-void print_timings(double time_gpu_upload,
-				   double time_gpu_download,
-				   double time_gpu_exec,
-				   double time_gpu_total,
-				   double time_fftw_plan,
-				   double time_fftw_exec,
-				   double time_fftw_total)
+void print_timings(int count,
+				   float time_gpu_upload,
+				   float time_gpu_download,
+				   float time_gpu_exec,
+				   float time_gpu_total,
+				   float time_fftw_plan,
+				   float time_fftw_exec,
+				   float time_fftw_total)
 {
-	printf("GPU (us): %f\n\tUL:%f\tEX:%f\tDL:%f\n",
+	// GPU: total, upload, execute, download
+	printf("%d,%f,%f,%f,%f",
+		   count,
 		   time_gpu_total, time_gpu_upload, time_gpu_exec, time_gpu_download);
-	printf("FFTW (us): %f\n\tPLAN:%f\tEX:%f\n",
+	// FFTW: total, plan, execute
+	printf(",%f,%f,%f\n",
 		   time_fftw_total, time_fftw_plan, time_fftw_exec);
 }
 
@@ -89,10 +87,8 @@ int main(int argc, char *argv[])
 	int count;
 
 	float *sample;
-	float *result;
-	float *result_ref;
 
-	double time_gpu_upload,
+	float time_gpu_upload,
 		time_gpu_download,
 		time_gpu_exec,
 		time_gpu_total,
@@ -104,22 +100,21 @@ int main(int argc, char *argv[])
 
 	fprintf(stderr,"count:%d\n", count);
 
-	result = fft(count, sample,
-				 &time_gpu_upload, &time_gpu_exec, &time_gpu_download,
-				 1);
+	fft(count, sample,
+		&time_gpu_upload, &time_gpu_exec, &time_gpu_download,
+		1);
 
 	// TODO adjust FFT length
-	result_ref = calc_fft_fftw(sample, count,
-							   &time_fftw_plan, &time_fftw_exec);
+	calc_fft_fftw(sample, count, count/2048,
+				  &time_fftw_plan, &time_fftw_exec);
 
-	free(result);
-	free(result_ref);
 	free(sample);
 
 	time_gpu_total = time_gpu_upload + time_gpu_exec + time_gpu_download;
 	time_fftw_total = time_fftw_plan + time_fftw_exec;
 
-	print_timings(time_gpu_upload, time_gpu_download, time_gpu_exec, time_gpu_total,
+	print_timings(count/1024 - 1,
+				  time_gpu_upload, time_gpu_download, time_gpu_exec, time_gpu_total,
 				  time_fftw_plan, time_fftw_exec, time_fftw_total);
 
 	return EXIT_SUCCESS;

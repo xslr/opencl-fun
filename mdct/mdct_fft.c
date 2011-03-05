@@ -7,7 +7,7 @@
 #include "clutil.h"
 
 float *mdct(size_t count, float *samples,
-			double *time_upload, double *time_exec, double *time_download,
+			float *time_upload, float *time_exec, float *time_download,
 			int profiling)
 {
 	DevInfo info;
@@ -30,7 +30,7 @@ float *mdct(size_t count, float *samples,
 	ctx.ws_global = (count/1024 - 1) * 256;
 
 	ctx.in_count = count;
-	ctx.out_count = count/2;
+	ctx.out_count = (count/1024 - 1) * 1024;
 
 	init_cl(&ctx, &info, "MDCT");
 	dev_diag(&info);
@@ -59,6 +59,7 @@ float *mdct(size_t count, float *samples,
 								 sizeof(cl_ulong),
 								 &upload_end,
 								 NULL);
+
 		clGetEventProfilingInfo( ev_exec,
 								 CL_PROFILING_COMMAND_START,
 								 sizeof(cl_ulong),
@@ -69,6 +70,7 @@ float *mdct(size_t count, float *samples,
 								 sizeof(cl_ulong),
 								 &exec_end,
 								 NULL);
+
 		clGetEventProfilingInfo( ev_download,
 								 CL_PROFILING_COMMAND_START,
 								 sizeof(cl_ulong),
@@ -80,9 +82,9 @@ float *mdct(size_t count, float *samples,
 								 &download_end,
 								 NULL);
 
-		*time_upload = (upload_end - upload_start) / 1000;
-		*time_exec = (exec_end - exec_start) / 1000;
-		*time_download = (download_end - download_start) / 1000;
+		*time_upload = (float)(upload_end - upload_start) / 1000.0f;
+		*time_exec = (float)(exec_end - exec_start) / 1000.0f;
+		*time_download = (float)(download_end - download_start) / 1000.0f;
 	} else {
 		upload_samples(&ctx, NULL, samples);
 		enqueue_kernel(&ctx, NULL, &info, "MDCT");

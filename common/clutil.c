@@ -109,7 +109,7 @@ void dev_diag(DevInfo *dev_info)
 
 void ctx_err(const char *errinfo, const void *private_info, size_t cb, void *user_data)
 {
-	fprintf(stderr, "(EE): Context error\n");
+	fprintf(stderr, "(EE): Context error:%s\n", errinfo);
 }
 
 int check_cl_err(cl_int err, const char *modname, const char *message)
@@ -292,7 +292,6 @@ int check_cl_err(cl_int err, const char *modname, const char *message)
 
 void buffer_create(float *samples, aacl_kernel_ctx *ctx, const char *modname)
 {
-	fprintf(stderr, "in_count:%d\n", ctx->in_count);
 	cl_int err;
 	ctx->in = clCreateBuffer( ctx->cl_ctx,
 							  CL_MEM_READ_ONLY,
@@ -306,6 +305,7 @@ void buffer_create(float *samples, aacl_kernel_ctx *ctx, const char *modname)
 							   ctx->out_count * sizeof(float),
 							   0,
 							   &err);
+	//fprintf(stderr, "******  OUTPUT BUFFER: %d  ******\n", ctx->out_count*sizeof(float));
 	check_cl_err(err, modname, "Create output buffer on CL device");
 }
 
@@ -414,7 +414,7 @@ float *download_result(aacl_kernel_ctx *ctx, cl_event *ev,
 
 	err = clEnqueueReadBuffer( ctx->cmd_queue,
 							   ctx->out,
-							   CL_TRUE,     // blocking read
+							   CL_FALSE,     // blocking read
 							   0,
 							   result_size,
 							   result,
