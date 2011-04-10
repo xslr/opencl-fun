@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from matplotlib.pylab import *
 import numpy as np
 
-zoom = 3
 epsilon = 0
 
 print "mdct_plot.py: MDCT output plotting script\n"
@@ -47,26 +46,27 @@ elif len(sys.argv) == 4:    # difference plotting
 print "Using matplotlib version:", matplotlib.__version__
 
 matplotlib.rcParams['font.family'] = 'Garamond Premier Pro'
-matplotlib.rcParams['font.size'] = 15*zoom
-
-#rc('text', usetex=True)
-#rc('font', family='serif')
+matplotlib.rcParams['font.size'] = 14
 
 x = np.arange(1024)
 y = np.arange(0, 8)
 z = [150*i for i in y]
 width = 0.1
 
-plt.plot(x, plotData, 'k', antialiased=False)
+plt.plot(x, plotData, 'k', linewidth=0.3, antialiased=False)
 plt.grid(True, 'major')
 plt.xticks(z, z)
 
-plt.ylabel('MDCT coefficient value')
+plt.ylabel('coefficient value')
 plt.xlabel('coefficient index')
 
 fig = plt.gcf()
-defaultSize = fig.get_size_inches()
-fig.set_figwidth(defaultSize[0]*zoom)
-fig.set_figheight(defaultSize[1]*zoom)
+
+fig_width_pt = 455.24411  # Get this from LaTeX using \showthe\columnwidth
+inches_per_pt = 1.0/72.27               # Convert pt to inch
+golden_mean = (sqrt(5)-1.0)/2.0         # Aesthetic ratio
+fig_width = fig_width_pt*inches_per_pt  # width in inches
+fig_height = fig_width*golden_mean      # height in inches
+fig_size =  [fig_width,fig_height]
 
 fig.savefig(outputFile)

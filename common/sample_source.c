@@ -101,7 +101,7 @@ float *get_seq(float delta, size_t count)
 	size_t i;
 	for (i = 0; i < count; i++)
 	{
-		data[i] = val;
+		data[i] = val/(float)count;
 		val += delta;
 	}
 
@@ -111,12 +111,23 @@ float *get_seq(float delta, size_t count)
 float *get_random(size_t count)
 {
 	float *buf = malloc(sizeof(float) * count);
+	float max = 0.0f;
+	size_t i = count;
 
 	srand( time(NULL) );
 
-	while (count > 0){
-		--count;
-		buf[count] = rand();
+	while (i > 0){
+		--i;
+		buf[i] = rand();
+
+		if (buf[i] > max)
+			max = buf[i];
+	}
+
+	i = count;
+	while (i > 0){
+		--i;
+		buf[i] = buf[i]/max;
 	}
 
 	return buf;

@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from matplotlib.pylab import *
 import numpy as np
 
-zoom = 2
 epsilon = 0.00001
 
 print "fft_plot.py: FFT output plotting script\n"
@@ -60,7 +59,7 @@ elif len(sys.argv) == 4:   # difference plotting
 print "Using matplotlib version:", matplotlib.__version__
 
 matplotlib.rcParams['font.family'] = 'Garamond Premier Pro'
-matplotlib.rcParams['font.size'] = 15*zoom
+matplotlib.rcParams['font.size'] = 14
 
 plt.axis('tight')
 
@@ -70,21 +69,24 @@ z = [200*i for i in y]
 width=0.1
 
 realPlot = subplot(211)
-realPlot.plot(x, plotData_r, 'k', antialiased=False)
+realPlot.plot(x, plotData_r, 'k', linewidth=0.3, antialiased=False)
 realPlot.grid(True, 'major')
 plt.xticks(z, z)
-ylabel('real component value')
+ylabel('real component')
 
 cmplxPlot = subplot(212)
-cmplxPlot.plot(x, plotData_i, 'k', antialiased=True)
+cmplxPlot.plot(x, plotData_i, 'k', linewidth=0.3,antialiased=True)
 cmplxPlot.grid(True, 'major')
 plt.xticks(z, z)
 xlabel('coefficient index')
-ylabel('complex component value')
+ylabel('complex component')
 
 fig = plt.gcf()
-defaultSize = fig.get_size_inches()
-fig.set_figwidth(defaultSize[0]*zoom)
-fig.set_figheight(defaultSize[1]*zoom)
+fig_width_pt = 455.24411  # Get this from LaTeX using \showthe\columnwidth
+inches_per_pt = 1.0/72.27               # Convert pt to inch
+golden_mean = (sqrt(5)-1.0)/2.0         # Aesthetic ratio
+fig_width = fig_width_pt*inches_per_pt  # width in inches
+fig_height = fig_width*golden_mean      # height in inches
+fig_size =  [fig_width,fig_height]
 
 fig.savefig(outputFile)

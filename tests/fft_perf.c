@@ -68,7 +68,7 @@ void print_timings(int count,
 				   float time_fftw_exec,
 				   float time_fftw_total)
 {
-	// GPU: total, upload, execute, download
+	// count, GPU: total, upload, execute, download
 	printf("%d,%f,%f,%f,%f",
 		   count,
 		   time_gpu_total, time_gpu_upload, time_gpu_exec, time_gpu_download);

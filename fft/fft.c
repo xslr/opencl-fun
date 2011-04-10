@@ -44,7 +44,6 @@ float *fft(size_t count, float *samples,
 				  &info,
 				  "FFT");
 
-
 	// set kernel arguments
 	err = clSetKernelArg(ctx.kernel, 0, sizeof(cl_mem), &ctx.in);
 	check_cl_err(err, "FFT", "Kernel::InputArg");

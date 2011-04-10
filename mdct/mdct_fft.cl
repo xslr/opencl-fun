@@ -166,15 +166,15 @@ void twiddle_mul( __local float *ar,
 				  size_t lid)
 {
 	float temp, tr, ti;
-	temp = -1 * TWO_PI * (((float)lid)+0.125) / ((float)2048);
 
+	temp = -1 * TWO_PI * (((float)lid)+0.125) / ((float)2048);
 	tr = native_cos(temp);
 	ti = native_sin(temp);
-
 	br[lid] = (ar[lid]*tr - ai[lid]*ti);
 	bi[lid] = (ar[lid]*ti + ai[lid]*tr);
 
 	lid += 256;
+
 	temp = -1 * TWO_PI * (((float)lid)+0.125) / ((float)2048);
 	tr = native_cos(temp);
 	ti = native_sin(temp);

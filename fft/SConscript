@@ -12,3 +12,4 @@ Export('libfft')
 
 localenv.Install('#/include', 'fft.h')
 localenv.Install('#/build', 'fft_2048.cl')
+localenv.Install('#/exec', 'fft_2048.cl')
