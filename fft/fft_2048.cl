@@ -30,146 +30,146 @@
 
 // prototypes
 void fft_2048_do( __local float *r_buf,
-				  __local float *i_buf);
+                  __local float *i_buf);
 void shuff_and_window( __global float *in,
-					   __global float *out,
-					   __local  float *r_buf,
-					   __local  float *i_buf);
+                       __global float *out,
+                       __local  float *r_buf,
+                       __local  float *i_buf);
 
 __kernel void fft_2048( __global float *in,
-						__global float *out)
+                        __global float *out)
 {
 
-	__local float r_buf[2048],
-				  i_buf[2048];
+    __local float r_buf[2048],
+                  i_buf[2048];
 
-	shuff_and_window(in, out, r_buf, i_buf);
+    shuff_and_window(in, out, r_buf, i_buf);
 
-	fft_2048_do(r_buf, i_buf);
+    fft_2048_do(r_buf, i_buf);
 
-	// upload imaginary and real components
-	{
-		__private event_t ev;
-		__private size_t  grp_id = get_group_id(0);
-		__global float *i_out = out + ((get_num_groups(0))<<11);
+    // upload imaginary and real components
+    {
+        __private event_t ev;
+        __private size_t  grp_id = get_group_id(0);
+        __global float *i_out = out + ((get_num_groups(0))<<11);
 
-		// copy imaginary components to global mem
-		ev = async_work_group_copy (i_out + (grp_id << 11),
-									&i_buf[0],
-									(size_t)2048,
-									0);
+        // copy imaginary components to global mem
+        ev = async_work_group_copy (i_out + (grp_id << 11),
+                                    &i_buf[0],
+                                    (size_t)2048,
+                                    0);
 
-		// copy real components to global mem
-		ev = async_work_group_copy (out + (grp_id << 11),
-									&r_buf[0],
-									(size_t)2048,
-									ev);
-		wait_group_events (1, &ev);
-	}
+        // copy real components to global mem
+        ev = async_work_group_copy (out + (grp_id << 11),
+                                    &r_buf[0],
+                                    (size_t)2048,
+                                    ev);
+        wait_group_events (1, &ev);
+    }
 
 }
 
 // fft_2048_do
 // computes a 2048 point radix-2 fft
 void fft_2048_do( __local float *r_buf,
-				  __local float *i_buf)
+                  __local float *i_buf)
 {
-	// This method computes a 2048 point radix 2 real to complex fft.
-	// Assumes that i_buf and i_buf is reset (all zeroes).
+    // This method computes a 2048 point radix 2 real to complex fft.
+    // Assumes that i_buf and i_buf is reset (all zeroes).
 
-	for (ushort lcl_fft_size = 2;
-				lcl_fft_size <= 2048;
-				lcl_fft_size = lcl_fft_size << 1)
-	{
-		
-		__private size_t lcl_id = get_local_id(0);
-		__private float2 twdl;
-		__private ushort sample_index =
-				floor((float)(lcl_id<<1) / (float)lcl_fft_size)
-				* lcl_fft_size
-				+ (lcl_id % (lcl_fft_size>>1));
+    for (ushort lcl_fft_size = 2;
+                lcl_fft_size <= 2048;
+                lcl_fft_size = lcl_fft_size << 1)
+    {
+        
+        __private size_t lcl_id = get_local_id(0);
+        __private float2 twdl;
+        __private ushort sample_index =
+                floor((float)(lcl_id<<1) / (float)lcl_fft_size)
+                * lcl_fft_size
+                + (lcl_id % (lcl_fft_size>>1));
 
-		// twiddle factor derivation explanation
-		// twiddle factor is given by exp(-2i*PI*k*n/N)
-		//		= cos(k/N) - isin(k/N)
-		// k for a work item is given by (thread_id % (local_fft_size/2)) * stride
-		//		stride = final_fft_length / local_fft_size
-		//			   = N / local_fft_size
-		//		so k/N simplifies to (thread_id % local_fft_size/2) * (N/local_fft_size) / N
-		//			   = (thread_id  % (local_fft_size/2)) / local_fft_size
-		twdl.x = (float)(lcl_id % (lcl_fft_size>>1)) * (float)TWO_PI / (float)lcl_fft_size;
+        // twiddle factor derivation explanation
+        // twiddle factor is given by exp(-2i*PI*k*n/N)
+        //      = cos(k/N) - isin(k/N)
+        // k for a work item is given by (thread_id % (local_fft_size/2)) * stride
+        //      stride = final_fft_length / local_fft_size
+        //             = N / local_fft_size
+        //      so k/N simplifies to (thread_id % local_fft_size/2) * (N/local_fft_size) / N
+        //             = (thread_id  % (local_fft_size/2)) / local_fft_size
+        twdl.x = (float)(lcl_id % (lcl_fft_size>>1)) * (float)TWO_PI / (float)lcl_fft_size;
 
-		// calculate twiddle factor
-		// (cos twdl.x - isin twdl.x)
-		TWDL_CALC(twdl);
-	
-		// multiply twiddle factor
-		// accepts the twiddle factor, real and imaginary buffers
-		// and the sample index of the 'second term' of fft calculation
-		TWDL_MUL(twdl, r_buf, i_buf, sample_index + (lcl_fft_size>>1));
+        // calculate twiddle factor
+        // (cos twdl.x - isin twdl.x)
+        TWDL_CALC(twdl);
+    
+        // multiply twiddle factor
+        // accepts the twiddle factor, real and imaginary buffers
+        // and the sample index of the 'second term' of fft calculation
+        TWDL_MUL(twdl, r_buf, i_buf, sample_index + (lcl_fft_size>>1));
 
-		// calculate two point DFT
-		// sample_index and (lcl_fft_size>>1) are the index and index difference
-		// of two numbers whose dft is calculated.
-		// indices are valid within r_buf and i_buf
-		DFT2(r_buf, i_buf, sample_index, sample_index + (lcl_fft_size>>1));
+        // calculate two point DFT
+        // sample_index and (lcl_fft_size>>1) are the index and index difference
+        // of two numbers whose dft is calculated.
+        // indices are valid within r_buf and i_buf
+        DFT2(r_buf, i_buf, sample_index, sample_index + (lcl_fft_size>>1));
 
-		barrier (CLK_LOCAL_MEM_FENCE);
-	}
+        barrier (CLK_LOCAL_MEM_FENCE);
+    }
 }
 
 // shuff_and_window
 // shuffles 2048 data items and applies a window function
 // pre processing for fft
 void shuff_and_window( __global float *in,
-					   __global float *out,
-					   __local  float *r_buf,
-					   __local  float *i_buf)
+                       __global float *out,
+                       __local  float *r_buf,
+                       __local  float *i_buf)
 {
-	event_t ev;
-	__private size_t lcl_id = get_local_id(0);
-	__private size_t grp_id = get_group_id(0);
-	__private size_t num_grp = get_num_groups(0);
+    event_t ev;
+    __private size_t lcl_id = get_local_id(0);
+    __private size_t grp_id = get_group_id(0);
+    __private size_t num_grp = get_num_groups(0);
 
-	async_work_group_copy( &r_buf[0],
-						   in + (grp_id<<10),
-						   (size_t)2048,
-						   ev);
+    async_work_group_copy( &r_buf[0],
+                           in + (grp_id<<10),
+                           (size_t)2048,
+                           ev);
 
-	// initialize imaginary data buffer
-	// while copying data from global mem
-	i_buf[lcl_id] = 0;
-	i_buf[lcl_id + 1024] = 0;
+    // initialize imaginary data buffer
+    // while copying data from global mem
+    i_buf[lcl_id] = 0;
+    i_buf[lcl_id + 1024] = 0;
 
-	// wait for data to arrive before shuffling it
-	wait_group_events(1, &ev);
+    // wait for data to arrive before shuffling it
+    wait_group_events(1, &ev);
 
-	{
-		__private ushort2 index_pair;
-		// calculate initial swap indices
-		index_pair.x = lcl_id;
-		// lcl_id is expected to range from 0 .. 1023
-		index_pair.y = ((index_pair.x & 0x5555) << 1) | ((index_pair.x & 0xaaaa) >> 1);
-		index_pair.y = ((index_pair.y & 0x3333) << 2) | ((index_pair.y & 0xcccc) >> 2);
-		index_pair.y = ((index_pair.y & 0x000f) << 8) | (index_pair.y & 0x00f0) | ((index_pair.y & 0x0f00) >> 8);
-		
-		index_pair.y >>= 1;
+    {
+        __private ushort2 index_pair;
+        // calculate initial swap indices
+        index_pair.x = lcl_id;
+        // lcl_id is expected to range from 0 .. 1023
+        index_pair.y = ((index_pair.x & 0x5555) << 1) | ((index_pair.x & 0xaaaa) >> 1);
+        index_pair.y = ((index_pair.y & 0x3333) << 2) | ((index_pair.y & 0xcccc) >> 2);
+        index_pair.y = ((index_pair.y & 0x000f) << 8) | (index_pair.y & 0x00f0) | ((index_pair.y & 0x0f00) >> 8);
+        
+        index_pair.y >>= 1;
 
-		if (index_pair.y > index_pair.x)
-		{
-			SWAP( r_buf[index_pair.x],
-				  r_buf[index_pair.y]);
-		}
+        if (index_pair.y > index_pair.x)
+        {
+            SWAP( r_buf[index_pair.x],
+                  r_buf[index_pair.y]);
+        }
 
-		barrier (CLK_LOCAL_MEM_FENCE);
+        barrier (CLK_LOCAL_MEM_FENCE);
 
-		index_pair += (ushort2)(1024, 1);
-		if (index_pair.y > index_pair.x)
-		{
-			SWAP (r_buf[index_pair.x],
-				  r_buf[index_pair.y]);
-		}
+        index_pair += (ushort2)(1024, 1);
+        if (index_pair.y > index_pair.x)
+        {
+            SWAP (r_buf[index_pair.x],
+                  r_buf[index_pair.y]);
+        }
 
-		barrier (CLK_LOCAL_MEM_FENCE);
-	}
+        barrier (CLK_LOCAL_MEM_FENCE);
+    }
 }

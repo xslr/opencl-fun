@@ -28,7 +28,7 @@ int totxtf(float *data, size_t count, const char *separator,
 		fprintf(fp, "%f", data[index]);
 
 		if (index != 0 && (index+1)%rowlen == 0)
-			fprintf(fp, "%s", rowmarker);
+   			fprintf(fp, "%s", rowmarker);
 		else if (index < (count-1))
 			fprintf(fp, "%s", separator);
 	}
@@ -123,12 +123,13 @@ float *get_random(size_t count)
 		if (buf[i] > max)
 			max = buf[i];
 	}
-
+	/*
 	i = count;
 	while (i > 0){
 		--i;
 		buf[i] = buf[i]/max;
 	}
+	*/
 
 	return buf;
 }
